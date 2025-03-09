@@ -1,7 +1,13 @@
 {
   "name": "rozsa-mogs",
   "version": "1.0.0",
+  "scripts": {
+    "build": "tsc"
+  },
   "devDependencies": {
     "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "socket.io": "^4.8.1"
   }
 }
