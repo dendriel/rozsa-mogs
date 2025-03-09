@@ -1,56 +1,9 @@
-import { Server } from 'socket.io';
-import { Socket } from "socket.io/dist/socket";
-import { IncomingMessage } from 'http';
+import {Server, Socket} from 'socket.io';
+import {IncomingMessage} from 'http';
+import {ConnectionInfo} from "./connection-info";
+import {ActiveConnection} from "./active-connection";
+import {GameServer} from "./game-server";
 
-/**
- * Active connection info payload.
- */
-export interface ConnectionInfo {
-    /**
-     * The payload should provide at least the token information.
-     */
-    token(): string;
-}
-
-/**
- * Represents the connected player.
- */
-export class ActiveConnection {
-    /**
-     * Create a new ActiveConnection.
-     * @param _socket network socket related to this connection.
-     * @param _info custom info payload.
-     */
-    constructor(private _socket: Socket, private _info: ConnectionInfo) {}
-    get socket() { return this._socket; }
-    get info() { return this._info; }
-}
-
-/**
- * Game-server actions to handle received network events.
- */
-export interface GameServer {
-
-    /**
-     * A new player has connected to the server.
-     * @param conn the connection containing player information.
-     */
-    onConnection(conn: ActiveConnection): void;
-
-    /**
-     * A player has disconnected from (or lost connection to) the server.
-     * @param conn the connection containing player information.
-     */
-    onDisconnection(conn: ActiveConnection): void;
-
-    /**
-     * Received a command from a connected player.
-     * @param conn the connection containing player information.
-     * @param cmd the command used.
-     * @param payload the data received from the player's client connection.
-     */
-    onCommand(conn: ActiveConnection, cmd: string, payload: any): void;
-}
 
 /**
  * Represents a message in the network-server level.
@@ -76,8 +29,8 @@ export class NetworkServer {
         this._expectedConnections = new Map();
         this._activeConnections = new Map();
 
-        this.io.use((socket, next) => this.authenticationFilter(socket, next)); // TODO: no bind required?
-        this.io.on('connection', (socket) => this.onConnection(socket));
+        this.io.use((socket: Socket, next: any) => this.authenticationFilter(socket, next));
+        this.io.on('connection', (socket: Socket) => this.onConnection(socket));
     }
 
     get expectedConnections(): ConnectionInfo[] {
@@ -163,7 +116,7 @@ export class NetworkServer {
 
         this.removeExpectedConnection(token);
 
-        socket.on('disconnect', (reason) => this.onDisconnection(reason, conn));
+        socket.on('disconnect', (reason: string) => this.onDisconnection(reason, conn));
         socket.on(NETWORK_CMD, (payload: SocketMessage) => this.onCommand(conn, payload));
 
         console.log("New connection received with token: ", token);
