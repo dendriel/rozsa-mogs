@@ -3,21 +3,8 @@ import {IncomingMessage} from 'http';
 import {ConnectionInfo} from "./connection-info";
 import {ActiveConnection} from "./active-connection";
 import {GameServer} from "./game-server";
-
-
-/**
- * Represents a message in the network-server level.
- */
-class SocketMessage {
-    /**
-     * Creates a new socket message.
-     * @param command the game-server command.
-     * @param payload the message payload.
-     */
-    constructor(public command: string, public payload: any) {}
-}
-
-const NETWORK_CMD: string = 'netw-server-cmd';
+import {SocketMessage} from "./socket-message";
+import {NETWORK_EVENTS} from "./constants";
 
 export class NetworkServer {
     // key: token, object: user-info
@@ -30,7 +17,7 @@ export class NetworkServer {
         this._activeConnections = new Map();
 
         this.io.use((socket: Socket, next: any) => this.authenticationFilter(socket, next));
-        this.io.on('connection', (socket: Socket) => this.onConnection(socket));
+        this.io.on(NETWORK_EVENTS.CONNECT, (socket: Socket) => this.onConnection(socket));
     }
 
     get expectedConnections(): ConnectionInfo[] {
@@ -51,7 +38,6 @@ export class NetworkServer {
 
     /**
      * Add an expected connection to this server.
-     * @param token the authentication token to be used (expected in the URLs query parameters).
      * @param data the player information.
      */
     addExpectedConnection(data: ConnectionInfo) {
@@ -116,8 +102,8 @@ export class NetworkServer {
 
         this.removeExpectedConnection(token);
 
-        socket.on('disconnect', (reason: string) => this.onDisconnection(reason, conn));
-        socket.on(NETWORK_CMD, (payload: SocketMessage) => this.onCommand(conn, payload));
+        socket.on(NETWORK_EVENTS.DISCONNECT, (reason: string) => this.onDisconnection(reason, conn));
+        socket.on(NETWORK_EVENTS.COMMAND, (payload: SocketMessage) => this.onCommand(conn, payload));
 
         console.log("New connection received with token: ", token);
 
@@ -147,7 +133,7 @@ export class NetworkServer {
      */
     broadcast(command: string, payload: any) {
         const msg = new SocketMessage(command, payload);
-        this.io.local.emit(NETWORK_CMD, msg);
+        this.io.local.emit(NETWORK_EVENTS.COMMAND, msg);
     }
 
     /**
@@ -165,7 +151,7 @@ export class NetworkServer {
         }
 
         const msg = new SocketMessage(command, payload);
-        conn.socket.emit(NETWORK_CMD, msg);
+        conn.socket.emit(NETWORK_EVENTS.COMMAND, msg);
     }
 
     /**

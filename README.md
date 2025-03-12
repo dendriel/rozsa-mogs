@@ -14,6 +14,7 @@ based-game using Phaser and started generalizing its network-server features to 
 
 ```shell
 npm login
+npm publish
 ```
 
 
