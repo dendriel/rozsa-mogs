@@ -1,6 +1,6 @@
 {
   "name": "rozsa-mogs",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Provides a network/game server implementation using websockets.",
   "author": "Vitor Rozsa",
   "license": "MIT",
@@ -9,18 +9,32 @@
     "_clear": "rimraf ./dist/compiled",
     "_tsc": "tsc",
     "_make-bundle": "rollup --config",
-    "_move": "cpx ./dist/compiled/rozsa-mogs.* ./dist",
+    "_move": "cpx ./dist/compiled/rozsa-mogs* ./dist",
     "build": "run-s _clear _tsc _make-bundle _move",
     "prepublishOnly": "npm run build"
   },
   "main": "dist/rozsa-mogs.js",
+  "module": "dist/rozsa-mogs-client.js",
   "types": "dist/rozsa-mogs.d.ts",
+  "exports": {
+    "import": {
+      "default": "./dist/rozsa-mogs-client.js",
+      "types": "./dist/types/rozsa-mogs-client.d.ts"
+    },
+    "require": {
+      "default": "./dist/rozsa-mogs.js",
+      "types": "./dist/types/rozsa-mogs.d.ts"
+    }
+  },
+
   "dependencies": {
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^12.1.2",
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-node-resolve": "^16.0.1",
     "cpx": "^1.5.0",
     "npm-run-all": "^4.1.5",
     "rimraf": "^6.0.1",
