@@ -1,0 +1,32 @@
+{
+  "name": "rozsa-mogs",
+  "description": "Provides a network/game server implementation using websockets.",
+  "author": "Vitor Rozsa",
+  "license": "MIT",
+  "homepage": "https://github.com/dendriel/rozsa-mogs#readme",
+  "scripts": {
+    "_clear": "rimraf ./dist/compiled",
+    "_tsc": "tsc",
+    "_make-bundle": "rollup --config",
+    "_move": "cpx ./dist/compiled/rozsa-mogs.* ./dist",
+    "build": "run-s _clear _tsc _make-bundle _move",
+    "prepublishOnly": "npm run build"
+  },
+  "main": "dist/rozsa-mogs.js",
+  "types": "dist/rozsa-mogs.d.ts",
+  "dependencies": {
+    "socket.io": "^4.8.1"
+  },
+  "files": [
+    "rozsa-mogs.d.ts",
+    "rozsa-mogs.js",
+    "rozsa-mogs.js.map"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dendriel/rozsa-mogs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dendriel/rozsa-mogs/issues"
+  }
+}
