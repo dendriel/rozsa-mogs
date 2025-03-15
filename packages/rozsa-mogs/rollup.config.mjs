@@ -6,7 +6,7 @@ const config = [
         input: 'dist/compiled/network-server.js',
         output: {
             file: 'dist/compiled/rozsa-mogs.js',
-            // format: 'cjs',
+            format: 'cjs',
             sourcemap: true
         },
         external: ['socket.io'],

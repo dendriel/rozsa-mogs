@@ -9,7 +9,8 @@ const config = [
         input: 'dist/compiled/network-client.js',
         output: {
             file: 'dist/compiled/rozsa-mogs-client.js',
-            format: 'esm', // (ES Modules)
+            format: 'umd', // (esm = ES Modules; umd  = browser support
+            name: "mogs",
             sourcemap: true
         },
         external: ['socket.io-client'],
