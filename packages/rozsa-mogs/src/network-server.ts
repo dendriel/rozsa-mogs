@@ -1,4 +1,7 @@
 import {Server, Socket} from 'socket.io';
+import http from 'http';
+import express from 'express';
+import socketio from 'socket.io';
 import {IncomingMessage} from 'http';
 import {ConnectionInfo} from "./connection-info";
 import {ActiveConnection} from "./active-connection";
@@ -12,12 +15,39 @@ export class NetworkServer {
     // key: socket-id, object: user-info
     _activeConnections: Map<string, ActiveConnection>;
 
-    constructor(private io: Server, private gameServer: GameServer) {
+    httpServer: http.Server | undefined;
+
+    socketServer: Server;
+
+    constructor(gameServer: GameServer);
+
+    constructor(private gameServer: GameServer, io?: Server, private readonly port?: number) { // maybe use partial
         this._expectedConnections = new Map();
         this._activeConnections = new Map();
 
-        this.io.use((socket: Socket, next: any) => this.authenticationFilter(socket, next));
-        this.io.on(NETWORK_EVENTS.CONNECT, (socket: Socket) => this.onConnection(socket));
+        this.port = port ?? 8090;
+        this.socketServer = io ?? this.createServer();
+
+        this.socketServer!.use((socket: Socket, next: any) => this.authenticationFilter(socket, next));
+        this.socketServer!.on(NETWORK_EVENTS.CONNECT, (socket: Socket) => this.onConnection(socket));
+    }
+
+    private createServer() : Server {
+        const app = express();
+        this.httpServer = http.createServer(app);
+        return new socketio.Server(this.httpServer, { cors: { origin: '*' } });
+    }
+
+    listen() {
+        this.httpServer!.listen(this.port, () => {
+            const address = this.httpServer!.address()!;
+            if (typeof address === 'string') {
+                console.log(`Server started on ${address}`);
+            }
+            else {
+                console.log(`Server started on ${address.address}/${address.port}`);
+            }
+        });
     }
 
     get expectedConnections(): ConnectionInfo[] {
@@ -133,7 +163,7 @@ export class NetworkServer {
      */
     broadcast(command: string, payload: any) {
         const msg = new SocketMessage(command, payload);
-        this.io.local.emit(NETWORK_EVENTS.COMMAND, msg);
+        this.socketServer!.local.emit(NETWORK_EVENTS.COMMAND, msg);
     }
 
     /**
@@ -160,7 +190,7 @@ export class NetworkServer {
     async terminate() {
         console.log("Network server is terminating...");
 
-        await this.io.close();
+        await this.socketServer!.close();
 
         this.activeConnections.forEach(c => {
             console.log(`Delete connection with token ${c.info.token}`);

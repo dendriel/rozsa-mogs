@@ -9,7 +9,7 @@ const config = [
             format: 'cjs',
             sourcemap: true
         },
-        external: ['socket.io'],
+        external: ['socket.io', 'http', 'express'],
         plugins: [typescript()]
     }, {
         input: 'dist/compiled/network-server.d.ts',
@@ -17,6 +17,7 @@ const config = [
             file: 'dist/compiled/rozsa-mogs.d.ts',
             format: 'es'
         },
+        external: ['socket.io', 'http', 'express'],
         plugins: [dts()]
     }
 ];

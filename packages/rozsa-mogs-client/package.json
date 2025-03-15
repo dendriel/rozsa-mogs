@@ -1,12 +1,12 @@
 {
   "name": "rozsa-mogs-client",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Provides a network/game client implementation using websockets.",
   "author": "Vitor Rozsa",
   "license": "MIT",
   "homepage": "https://github.com/dendriel/rozsa-mogs#readme",
   "scripts": {
-    "_clear": "rimraf ./dist/compiled",
+    "_clear": "rimraf ./dist",
     "_tsc": "tsc",
     "_make-bundle": "rollup --config",
     "_move": "cpx ./dist/compiled/rozsa-mogs-client.* ./dist",
