@@ -14,9 +14,10 @@
     "publish": "run-s _publish:server _publish:client"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-multi-entry": "^6.0.1",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.2",
-    "@rollup/plugin-commonjs": "^28.0.3",
     "cpx": "^1.5.0",
     "npm-run-all": "^4.1.5",
     "rimraf": "^6.0.1",
