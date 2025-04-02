@@ -9,7 +9,7 @@ const config = [
         input: 'dist/compiled/index.js',
         output: {
             file: 'dist/compiled/rozsa-mogs-client.js',
-            format: 'umd', // (esm = ES Modules; umd  = browser support
+            format: 'esm', // (esm = ES Modules; umd  = browser support
             name: "mogs",
             sourcemap: true
         },
