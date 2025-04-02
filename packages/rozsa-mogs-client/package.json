@@ -1,6 +1,6 @@
 {
   "name": "rozsa-mogs-client",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Provides a network/game client implementation using websockets.",
   "author": "Vitor Rozsa",
   "license": "MIT",

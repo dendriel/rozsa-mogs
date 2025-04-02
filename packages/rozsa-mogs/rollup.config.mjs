@@ -9,7 +9,7 @@ const config = [
             format: 'cjs',
             sourcemap: true,
             // Use module.exports to bundle exports together. Expects 'export default' defined (it is in index.ts)
-            exports: 'default'
+            exports: 'auto'
         },
         external: ['socket.io', 'http', 'express'],
         plugins: [typescript()]

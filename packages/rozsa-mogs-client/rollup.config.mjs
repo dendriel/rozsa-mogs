@@ -6,7 +6,7 @@ import dts from 'rollup-plugin-dts';
 
 const config = [
     {
-        input: 'dist/compiled/network-client.js',
+        input: 'dist/compiled/index.js',
         output: {
             file: 'dist/compiled/rozsa-mogs-client.js',
             format: 'umd', // (esm = ES Modules; umd  = browser support
@@ -19,7 +19,7 @@ const config = [
                     commonjs(), // Convert CommonJS to ES Modules
                 ]
     }, {
-        input: 'dist/compiled/network-client.d.ts',
+        input: 'dist/compiled/index.d.ts',
         output: {
             file: 'dist/compiled/rozsa-mogs-client.d.ts',
             format: 'es'
