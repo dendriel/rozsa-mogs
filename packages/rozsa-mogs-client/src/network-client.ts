@@ -30,7 +30,7 @@ export class NetworkClient {
     }
 
     onCommand(msg: SocketMessage) {
-        this.gameClient.onCommand(msg.command, msg.payload.payload);
+        this.gameClient.onCommand(msg.command, msg.payload);
     }
 
     send(command: string, payload: any) {
