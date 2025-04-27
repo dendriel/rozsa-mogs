@@ -14,6 +14,11 @@ based-game using Phaser and started generalizing its network-server features to 
 - Client and Server side websocket abstractions
 - Define and authorize only expected connections
 - Allows sharing client information on connection
+- Server Lobby Mode
+
+## Usage
+
+TODO
 
 # Publish
 

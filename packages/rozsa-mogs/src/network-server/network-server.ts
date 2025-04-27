@@ -10,24 +10,50 @@ import {SocketMessage} from "./socket-message";
 import {NETWORK_EVENTS} from "./constants";
 import ConnectionParams from "./connection-params.js";
 
+interface NetworkServerConfig {
+    /**
+     * Use a manually configured socket.io instead of the library autoconfigured one.
+     */
+    io: Server;
+    /**
+     * Server listening port.
+     * *Can be override in listen() method.
+     */
+    port: number;
+    /**
+     * Make the server work on Lobby mode, ignoring expected connections.
+     */
+    lobbyMode: boolean;
+    /**
+     * (lobby mode) Required code to join the lobby.
+     */
+    lobbyCode: string;
+    /**
+     * (lobby mode) Maximum players allowed in the lobby.
+     * *There is no player limit if not specified.
+     */
+    lobbyMaxPlayers: number;
+}
+
+
 export class NetworkServer {
+    private static readonly defaultPort = 8090;
+
     // key: token, object: user-info
-    _expectedConnections: Map<string, ConnectionInfo>;
+    private readonly _expectedConnections: Map<string, ConnectionInfo>;
     // key: socket-id, object: user-info
-    _activeConnections: Map<string, ActiveConnection>;
+    private readonly _activeConnections: Map<string, ActiveConnection>;
 
-    httpServer: http.Server | undefined;
+    private httpServer: http.Server | undefined;
 
-    socketServer: Server;
+    private socketServer: Server;
 
-    constructor(gameServer: GameServer);
+    constructor(private gameServer: GameServer, private config: Partial<NetworkServerConfig> = {}) {
 
-    constructor(private gameServer: GameServer, io?: Server, private readonly port?: number) { // maybe use partial
         this._expectedConnections = new Map();
         this._activeConnections = new Map();
 
-        this.port = port ?? 8090;
-        this.socketServer = io ?? this.createServer();
+        this.socketServer = config.io ?? this.createServer();
 
         this.socketServer!.use((socket: Socket, next: any) => this.authenticationFilter(socket, next));
         this.socketServer!.on(NETWORK_EVENTS.CONNECT, (socket: Socket) => this.onConnection(socket));
@@ -41,7 +67,7 @@ export class NetworkServer {
 
     listen(customPort?: number) {
 
-        const targetPort = customPort ?? this.port;
+        const targetPort = customPort ?? this.config.port ?? NetworkServer.defaultPort;
 
         this.httpServer!.listen(targetPort, () => {
             const address = this.httpServer!.address()!;
@@ -96,9 +122,24 @@ export class NetworkServer {
         return this._activeConnections.get(socketId);
     }
 
-
     private isConnectionExpected(token: string): boolean {
-        return this._expectedConnections.has(token);
+        if (!this.config.lobbyMode) {
+            return this._expectedConnections.has(token);
+        }
+
+        // Check if the lobby is full.
+        if (this.config.lobbyMaxPlayers &&
+            this.activeConnections.length >= this.config.lobbyMaxPlayers) {
+            console.log(`Lobby is already full with ${this.activeConnections.length} players.`);
+            return false;
+        }
+
+        if (this.config.lobbyCode) {
+            return this.config.lobbyCode === token;
+        }
+
+        // Accept the connection if the lobby is open (doesn't require a code).
+        return true;
     }
 
     private authenticationFilter(socket: Socket, next: any) {
