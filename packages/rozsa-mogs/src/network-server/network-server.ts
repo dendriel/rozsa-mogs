@@ -38,8 +38,11 @@ export class NetworkServer {
         return new socketio.Server(this.httpServer, { cors: { origin: '*' } });
     }
 
-    listen() {
-        this.httpServer!.listen(this.port, () => {
+    listen(customPort?: number) {
+
+        const targetPort = customPort ?? this.port;
+
+        this.httpServer!.listen(targetPort, () => {
             const address = this.httpServer!.address()!;
             if (typeof address === 'string') {
                 console.log(`Server started on ${address}`);
