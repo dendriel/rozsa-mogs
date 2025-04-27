@@ -3,24 +3,40 @@ import {SocketMessage} from "./socket-message";
 import {NETWORK_EVENTS} from "./constants";
 import {GameClient} from "./game-client";
 
+
+export interface ConnectionConfig {
+    /**
+     * The connection token required to be authorized in the server.
+     */
+    connectionToken: string;
+    /**
+     * (lobby mode) Unique connection identifier. Cache it to allow player reconnecting to the server.
+     */
+    connectionId: string;
+    /**
+     * Extra custom parameters expected by the server (e.g.: nickname, game preferences, etc).
+     * *As it is encoded in the connection URL, it has the same limitations of a URL (i.e.: limited size).
+     */
+    extraParams: Map<string, string>;
+}
+
 export class NetworkClient {
     socket: Socket | null = null;
     constructor(private gameClient: GameClient, private serverAddress: string) {}
 
     /**
      * Connect to the remote server.
-     * @param connectionToken the connection token required to be authorized in the server.
-     * @param params custom parameters expected by the server (e.g.: nickname, game preferences, etc).
+     * @param config connection configurations.
      */
-    connect(connectionToken?: string, params?: Map<string, string>) {
+    connect(config: Partial<ConnectionConfig>) {
         let query: any = {};
-        if (connectionToken) {
-            query = { token: connectionToken }
+        if (config.connectionToken) {
+            query = { conn_token: config.connectionToken, conn_id: config.connectionId }
         }
 
-        if (params) {
+        if (config.extraParams) {
             // set value using assigment instead of .set() so it works in the browser.
-            params.forEach( (v, k) => query[k] = v);
+            config.extraParams.forEach( (v, k) => query[k] = v);
         }
 
         this.socket = io(this.serverAddress, { query: query } );

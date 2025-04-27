@@ -37,6 +37,9 @@ interface NetworkServerConfig {
 
 
 export class NetworkServer {
+    private static readonly CONN_TOKEN = 'conn_token';
+    private static readonly CONN_ID = 'conn_id';
+
     private static readonly defaultPort = 8090;
 
     // key: token, object: user-info
@@ -66,7 +69,6 @@ export class NetworkServer {
     }
 
     listen(customPort?: number) {
-
         const targetPort = customPort ?? this.config.port ?? NetworkServer.defaultPort;
 
         this.httpServer!.listen(targetPort, () => {
@@ -89,7 +91,7 @@ export class NetworkServer {
     }
 
     private getActiveConnectionByToken(token: string): ActiveConnection | undefined {
-        assertValidString(token, "token");
+        assertValidString(token, NetworkServer.CONN_TOKEN);
 
         // TODO: to avoid looping everytime, we can create an ActivityConnectionHolder to map the conns both to socketId and token.
         // unless this is used only while connection, in which case wouldn't have a big impact.
@@ -122,7 +124,7 @@ export class NetworkServer {
         return this._activeConnections.get(socketId);
     }
 
-    private isConnectionExpected(token: string): boolean {
+    private isConnectionExpected(token: string, connParams: ConnectionParams): boolean {
         if (!this.config.lobbyMode) {
             return this._expectedConnections.has(token);
         }
@@ -134,8 +136,15 @@ export class NetworkServer {
             return false;
         }
 
-        if (this.config.lobbyCode) {
-            return this.config.lobbyCode === token;
+        if (!connParams.get(NetworkServer.CONN_ID)) {
+            // Can't connect in an open lobby without an ID.
+            console.log(`Missing connection ID.`);
+            return false;
+        }
+
+        if (this.config.lobbyCode && this.config.lobbyCode !== token) {
+            console.log(`Invalid lobby code: ${token}. Expected: ${this.config.lobbyCode}`)
+            return false;
         }
 
         // Accept the connection if the lobby is open (doesn't require a code).
@@ -143,15 +152,16 @@ export class NetworkServer {
     }
 
     private authenticationFilter(socket: Socket, next: any) {
-        let token = this.getParam('token', socket.request);
+        const connParams = this.getConnectionParams(socket.request);
+        const connToken = connParams.get(NetworkServer.CONN_TOKEN)!;
 
-        if (!this.isConnectionExpected(token)) {
-            console.log("DENIED unauthorized incoming connection with token: ", token);
+        if (!this.isConnectionExpected(connToken, connParams)) {
+            console.log("DENIED unauthorized incoming connection with token: ", connToken);
             next(new Error('Not authorized'));
             return;
         }
 
-        console.log("ACCEPTED incoming connection with token: ", token);
+        console.log("ACCEPTED incoming connection with token: ", connToken);
 
         next();
     }
@@ -181,21 +191,42 @@ export class NetworkServer {
      */
     private onConnection(socket: Socket) {
         const params = this.getConnectionParams(socket.request);
+        const connToken = params.get(NetworkServer.CONN_TOKEN)!;
 
-        const token = params.get('token')!;
-        let info = this._expectedConnections.get(token);
+        let info: ConnectionInfo;
+        if (!this.config.lobbyMode) {
+            info = this._expectedConnections.get(connToken)!;
+        }
+        else {
+            // Automatically creates the connection info for lobby players.
+            info = new class implements ConnectionInfo {
+                token(): string { return params.get(NetworkServer.CONN_ID)!; }
+            }
+        }
 
-        let conn = new ActiveConnection(socket, info!, params);
+
+        let conn = new ActiveConnection(socket, info, params);
         this.addActiveConnection(socket.id, conn);
 
-        this.removeExpectedConnection(token);
+        this.removeExpectedConnection(connToken);
 
         socket.on(NETWORK_EVENTS.DISCONNECT, (reason: string) => this.onDisconnection(reason, conn));
         socket.on(NETWORK_EVENTS.COMMAND, (payload: SocketMessage) => this.onCommand(conn, payload));
 
-        console.log("New connection received with token: ", token);
+        console.log("New connection received with token: ", connToken);
 
         this.gameServer.onConnection(conn);
+    }
+
+    disconnect(token: string) {
+        assertValidString(token, "token");
+        let conn = this.getActiveConnectionByToken(token);
+        if (!conn) {
+            console.log(`Player with token "${token}" is not connected!`);
+            return;
+        }
+
+        conn.socket.disconnect(true);
     }
 
     private onDisconnection(reason: string, conn: any) {
