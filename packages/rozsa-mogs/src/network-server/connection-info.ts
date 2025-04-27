@@ -1,4 +1,3 @@
-
 /**
  * Active connection info payload.
  */

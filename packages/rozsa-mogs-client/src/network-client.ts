@@ -7,10 +7,20 @@ export class NetworkClient {
     socket: Socket | null = null;
     constructor(private gameClient: GameClient, private serverAddress: string) {}
 
-    connect(connectionToken?: string) {
+    /**
+     * Connect to the remote server.
+     * @param connectionToken the connection token required to be authorized in the server.
+     * @param params custom parameters expected by the server (e.g.: nickname, game preferences, etc).
+     */
+    connect(connectionToken?: string, params?: Map<string, string>) {
         let query: any = {};
         if (connectionToken) {
             query = { token: connectionToken }
+        }
+
+        if (params) {
+            // set value using assigment instead of .set() so it works in the browser.
+            params.forEach( (v, k) => query[k] = v);
         }
 
         this.socket = io(this.serverAddress, { query: query } );
@@ -20,8 +30,8 @@ export class NetworkClient {
         this.socket.on(NETWORK_EVENTS.COMMAND, this.onCommand.bind(this));
     }
 
-    onConnectError(error: Error) { // idk the type yet
-        // TODO: ideally we should parse the error and throw a lib error instead of just fowarding.
+    onConnectError(error: Error) {
+        // TODO: ideally we should parse the error and throw a lib error instead of just forwarding.
         this.gameClient.onConnectError(error);
     }
 

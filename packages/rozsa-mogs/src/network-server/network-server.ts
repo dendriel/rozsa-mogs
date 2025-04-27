@@ -8,6 +8,7 @@ import {ActiveConnection} from "./active-connection";
 import {GameServer} from "./game-server";
 import {SocketMessage} from "./socket-message";
 import {NETWORK_EVENTS} from "./constants";
+import ConnectionParams from "./connection-params.js";
 
 export class NetworkServer {
     // key: token, object: user-info
@@ -114,8 +115,19 @@ export class NetworkServer {
         next();
     }
 
+    private getConnectionParams(req: IncomingMessage): ConnectionParams {
+        const url = new URL(req.url!, `http://${req.headers.host}`);
+
+        const params = new Map<string, string>();
+        for (let e of url.searchParams.entries()) {
+            params.set(e[0], e[1]);
+        }
+
+        return new ConnectionParams(params);
+    }
+
     private getParam(name: string, req: IncomingMessage): string {
-        const url = new URL(req.url!, `http://${req.headers.host}`); // TODO: what happens if it is https?
+        const url = new URL(req.url!, `http://${req.headers.host}`);
 
         const param = url.searchParams.get(name);
         return param ?? '';
@@ -127,10 +139,12 @@ export class NetworkServer {
      * @private
      */
     private onConnection(socket: Socket) {
-        let token = this.getParam('token', socket.request);
+        const params = this.getConnectionParams(socket.request);
+
+        const token = params.get('token')!;
         let info = this._expectedConnections.get(token);
 
-        let conn = new ActiveConnection(socket, info!);
+        let conn = new ActiveConnection(socket, info!, params);
         this.addActiveConnection(socket.id, conn);
 
         this.removeExpectedConnection(token);
