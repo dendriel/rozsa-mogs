@@ -1,5 +1,7 @@
 import {Server, Socket} from 'socket.io';
 import http from 'http';
+import https from 'http';
+import fs from 'fs';
 import express from 'express';
 import socketio from 'socket.io';
 import {IncomingMessage} from 'http';
@@ -9,6 +11,18 @@ import {GameServer} from "./game-server";
 import {SocketMessage} from "./socket-message";
 import {NETWORK_EVENTS} from "./constants";
 import ConnectionParams from "./connection-params.js";
+import {ServerOptions} from "https";
+
+interface NetworkSslConfig {
+    /**
+     * The path to the private key.
+     */
+    keyPath: string;
+    /**
+     * The path to the certificate.
+     */
+    certPath: string;
+}
 
 interface NetworkServerConfig {
     /**
@@ -33,6 +47,10 @@ interface NetworkServerConfig {
      * *There is no player limit if not specified.
      */
     lobbyMaxPlayers: number;
+    /**
+     * SSL credentials if using a secure connection.
+     */
+    ssl: NetworkSslConfig;
 }
 
 
@@ -64,7 +82,18 @@ export class NetworkServer {
 
     private createServer() : Server {
         const app = express();
-        this.httpServer = http.createServer(app);
+
+        if (!this.config.ssl) {
+            this.httpServer = http.createServer(app);
+        }
+        else {
+            const options : ServerOptions = {
+                key: fs.readFileSync(this.config.ssl.keyPath),
+                cert: fs.readFileSync(this.config.ssl.certPath)
+            };
+            this.httpServer = https.createServer(options, app);
+        }
+
         return new socketio.Server(this.httpServer, { cors: { origin: '*' } });
     }
 
