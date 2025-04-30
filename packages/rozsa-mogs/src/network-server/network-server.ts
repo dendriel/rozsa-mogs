@@ -1,6 +1,6 @@
 import {Server, Socket} from 'socket.io';
 import http from 'http';
-import https from 'http';
+import https from 'https';
 import fs from 'fs';
 import express from 'express';
 import socketio from 'socket.io';
