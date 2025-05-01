@@ -31,7 +31,10 @@ export class NetworkClient {
     connect(config: Partial<ConnectionConfig>) {
         let query: any = {};
         if (config.connectionToken) {
-            query = { conn_token: config.connectionToken, conn_id: config.connectionId }
+            query.conn_token = config.connectionToken;
+        }
+        if (config.connectionId) {
+            query.conn_id = config.connectionId;
         }
 
         if (config.extraParams) {
