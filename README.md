@@ -16,6 +16,7 @@ based-game using Phaser and started generalizing its network-server features to 
 - Allows sharing client information on connection
 - Server Lobby Mode and Matchmaking Mode
 - Authentication for incoming players
+- Handle reconnections
 - Game-loop default implementation
 
 ## Usage
@@ -34,7 +35,12 @@ export class YourGameServer implements GameServer {
 
     constructor(...) {
         // Configure the server
-        this.networkServer = new mogs.NetworkServer(this, { lobbyMode: lobbyMode, lobbyCode: lobbyCode, lobbyMaxPlayers: playersCount, ssl: sslCfg });
+        this.networkServer = new mogs.NetworkServer(this, {
+            lobbyMode: lobbyMode,
+            lobbyCode: lobbyCode, // The code shared with players to join
+            lobbyMaxPlayers: playersCount, // Max count of expected players
+            ssl: sslCfg // Optional support for SSL/TLS
+        });
     }
     
     start(port: number) {
@@ -60,15 +66,21 @@ export class YourGameServer implements GameServer {
 ```ts
 export class YourGameClient implements GameClient {
 
-    private networkClient: NetworkClient | undefined;
+    private readonly networkClient: NetworkClient | undefined;
+    private readonly playerId: string;
 
     constructor(address: string, port: number) {
         // Configure the client
         this.networkClient = new mogs.NetworkClient(this, `//${address}:${port}/`);
+        this.playerId = uuidv4();
     }
     
     connect(...) {
-        this.networkClient.connect({ connectionToken: lobbyCode, connectionId: playerId, extraParams: this.getConnectionParams() });
+        this.networkClient.connect({
+            connectionToken: lobbyCode, // Lobby code expected by the game-server
+            connectionId: this.playerId, // Random player ID used to identify the player (and to reconnect if necessary)
+            extraParams: this.getConnectionParams()
+        });
     }
 
     onConnectError(error: Error) {
